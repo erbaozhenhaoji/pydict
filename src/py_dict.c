@@ -12,30 +12,31 @@
 #include <assert.h>
 #include <py_sign.h>
 #include <py_utils.h>
-#include <pdict.h>
+#include <py_dict.h>
 
 
 #define BLOCK_STEP 50000
 
 /*
- * func : create an PDICT struct
+ * func : create an py_dict_t struct
  *
  * args : hashsize, the hash table size
  *      : nodesize, the node array size
  *
  * ret  : NULL, error;
- *      : else, pointer the the PDICT struct
+ *      : else, pointer the the py_dict_t struct
  */ 
-PDICT*  pdict_create(const int hashsize, const int nodesize)
+py_dict_t*  pydict_create(const int hashsize, const int nodesize)
 {
-	PDICT*        pdict = NULL;
-	PNODE*        block = NULL;
+	py_dict_t*          pydict   = NULL;
+	PNODE*          block   = NULL;
 	unsigned int*   hashtab = NULL;
+	int             i       = 0;
 	
 
 	// create the struct
-	pdict = (PDICT*)calloc(1, sizeof(PDICT));
-	if(!pdict){
+	pydict = (py_dict_t*)calloc(1, sizeof(py_dict_t));
+	if(!pydict){
 		goto failed;
 	}
 	
@@ -44,7 +45,7 @@ PDICT*  pdict_create(const int hashsize, const int nodesize)
 	if(!hashtab){
 		goto failed;
 	}
-	for(int i=0;i<hashsize;i++){
+	for(i=0;i<hashsize;i++){
 		hashtab[i] = COMMON_NULL;
 	}
 
@@ -52,23 +53,23 @@ PDICT*  pdict_create(const int hashsize, const int nodesize)
 	if(!block){
 		goto failed;
 	}
-	for(int i=0;i<nodesize;i++){
+	for(i=0;i<nodesize;i++){
 		block[i].next = COMMON_NULL;
 	}
 
 	
-	pdict->hashtab      = hashtab;
-	pdict->hashsize     = hashsize;
-	pdict->block        = block;
-	pdict->block_size   = nodesize;
-	pdict->block_pos    = 0;
+	pydict->hashtab      = hashtab;
+	pydict->hashsize     = hashsize;
+	pydict->block        = block;
+	pydict->block_size   = nodesize;
+	pydict->block_pos    = 0;
 
-	return pdict;
+	return pydict;
 
 failed:
-	if(pdict){
-		free(pdict);
-		pdict = NULL;
+	if(pydict){
+		free(pydict);
+		pydict = NULL;
 	}
 	if(hashtab){
 		free(hashtab);
@@ -82,61 +83,61 @@ failed:
 }
 
 /*
- * func : free a PDICT struct
+ * func : free a py_dict_t struct
  */
-void pdict_free(PDICT* pdict)
+void pydict_free(py_dict_t* pydict)
 {
-	if(!pdict){
+	if(!pydict){
 		return;
 	}
-	if(pdict->hashtab){
-		free(pdict->hashtab);
-		pdict->hashtab=NULL;
+	if(pydict->hashtab){
+		free(pydict->hashtab);
+		pydict->hashtab=NULL;
 	}
-	if(pdict->block){
-		free(pdict->block);
-		pdict->block = NULL;
+	if(pydict->block){
+		free(pydict->block);
+		pydict->block = NULL;
 	}
-	free(pdict);
-	pdict = NULL;
+	free(pydict);
+	pydict = NULL;
 }
 
 /*
  * func : add a value pair to the hash table;
  * 
- * args : pdict, the pointer to PDICT 
+ * args : pydict, the pointer to py_dict_t 
  *      : key, value, the input pair
  *
  * ret  : 0,  find a same key, value changed;
  *      : 1,  find NO same key, new node added,
  *      : -1, error;
  */
-int pdict_add(PDICT* pdict, const char* key, const int keylen, const int code, const int value)
+int pydict_add(py_dict_t* pydict, const char* key, const int keylen, const int code, const int value)
 {
 	unsigned int   sign1      = 0;
 	unsigned int   sign2      = 0;
 	PNODE          node;
 
-	py_sign64(key, keylen, &sign1, &sign2);
+	py_sign64_double_int(key, keylen, &sign1, &sign2);
 	node.sign1 = sign1;
 	node.sign2 = sign2;
 	node.code  = code;
 	node.value = value;
 
-	return pdict_add(pdict, &node);
+	return pydict_add_node(pydict, &node);
 }
 
 /*
  * func : add a node to the hash table;
  * 
- * args : pdict, pointer to PDICT 
+ * args : pydict, pointer to py_dict_t 
  *      : node , pointer to input node
  *
  * ret  : 0,  find a same key, value changed;
  *      : 1,  find NO same key, new node added,
  *      : -1, error;
  */
-int pdict_add(PDICT* pdict, PNODE* node) 
+int pydict_add_node(py_dict_t* pydict, PNODE* node) 
 {
 	unsigned int   pos        = 0;
 	unsigned int   hashval    = 0;
@@ -145,25 +146,25 @@ int pdict_add(PDICT* pdict, PNODE* node)
 	PNODE*         curnode    = NULL;
 
 	hashval  = node->sign1+node->sign2;
-	hashtab  = pdict->hashtab;
-	hashsize = pdict->hashsize;
+	hashtab  = pydict->hashtab;
+	hashsize = pydict->hashsize;
 	pos = hashval % hashsize;
 
 	if(hashtab[pos]==COMMON_NULL){ // can not find in hash table
-		unsigned int block_size = pdict->block_size;
-		unsigned int block_pos  = pdict->block_pos;
+		unsigned int block_size = pydict->block_size;
+		unsigned int block_pos  = pydict->block_pos;
 		if(block_pos==block_size){ // if block array is full, realloc block array
-			PNODE* block = pdict->block;
+			PNODE* block = pydict->block;
 			block = (PNODE*)realloc(block, sizeof(PNODE)*(block_size+BLOCK_STEP));
 			if(!block){
 				assert(0);
 			}
 			block_size += BLOCK_STEP;
-			pdict->block = block;
-			pdict->block_size = block_size;
+			pydict->block = block;
+			pydict->block_size = block_size;
 		}
 
-		curnode = pdict->block+block_pos;
+		curnode = pydict->block+block_pos;
 		curnode->sign1 = node->sign1;
 		curnode->sign2 = node->sign2;
 		curnode->code  = node->code;
@@ -172,17 +173,17 @@ int pdict_add(PDICT* pdict, PNODE* node)
 		hashtab[pos]   = block_pos; 
 
 		block_pos++;
-		pdict->block_pos = block_pos;
+		pydict->block_pos = block_pos;
 		return 0;
 	}
 	else{
 		unsigned int nodepos = hashtab[pos];
-		PNODE*       pnode   = pdict->block+nodepos;
+		PNODE*       pnode   = pydict->block+nodepos;
 		while((unsigned int)pnode->next!=COMMON_NULL){
 			if(pnode->sign1==node->sign1&&pnode->sign2==node->sign2) {
 				break;
 			}
-			pnode     = pdict->block+pnode->next;
+			pnode     = pydict->block+pnode->next;
 		}
 		if(pnode->sign1==node->sign1 && pnode->sign2==node->sign2){ // find same key node
 			pnode->code  = node->code;
@@ -191,20 +192,20 @@ int pdict_add(PDICT* pdict, PNODE* node)
 		}
 
 		// can not find same key node, add a new node
-		unsigned int block_size = pdict->block_size;
-		unsigned int block_pos = pdict->block_pos;
+		unsigned int block_size = pydict->block_size;
+		unsigned int block_pos = pydict->block_pos;
 		if(block_pos==block_size){
-			PNODE* block = pdict->block;
+			PNODE* block = pydict->block;
 			block = (PNODE*)realloc(block, sizeof(PNODE)*(block_size+BLOCK_STEP));
 			if(!block){
 				assert(0);
 			}
 			block_size += BLOCK_STEP;
-			pdict->block = block;
-			pdict->block_size = block_size;
+			pydict->block = block;
+			pydict->block_size = block_size;
 		}
 		
-		PNODE* curnode = pdict->block+block_pos;
+		PNODE* curnode = pydict->block+block_pos;
 		curnode->sign1 = node->sign1;
 		curnode->sign2 = node->sign2;
 		curnode->code  = node->code;
@@ -213,7 +214,7 @@ int pdict_add(PDICT* pdict, PNODE* node)
 		hashtab[pos] = block_pos;
 
 		block_pos++;
-		pdict->block_pos = block_pos;
+		pydict->block_pos = block_pos;
 		return 0;
 	}
 
@@ -222,15 +223,17 @@ int pdict_add(PDICT* pdict, PNODE* node)
 /*
  * func : reset the hash table;
  */
-void pdict_reset(PDICT* pdict)
+void pydict_reset(py_dict_t* pydict)
 {
-	for(unsigned int i=0;i<pdict->block_pos;i++){
-		pdict->block[i].next = COMMON_NULL;
-	}
-	pdict->block_pos = 0;
+	unsigned int i = 0;
 
-	for(unsigned int i=0;i<pdict->hashsize;i++){
-		pdict->hashtab[i] = COMMON_NULL;
+	for(i=0;i<pydict->block_pos;i++){
+		pydict->block[i].next = COMMON_NULL;
+	}
+	pydict->block_pos = 0;
+
+	for(i=0;i<pydict->hashsize;i++){
+		pydict->hashtab[i] = COMMON_NULL;
 	}
 }
 
@@ -242,12 +245,13 @@ void pdict_reset(PDICT* pdict)
  * ret  : NULL, can NOT get first node, hash table empty
  *      : else, pointer to the first node
  */
-PNODE* pdict_first(PDICT* pdict, unsigned int* pos)
+PNODE* pydict_first(py_dict_t* pydict, unsigned int* pos)
 {
-	PNODE* pnode = NULL;
+	PNODE*        pnode = NULL;
+	unsigned int  i     = 0;
 
-	for(unsigned int i=0;i<pdict->block_pos;i++){
-		pnode = pdict->block+i;
+	for(i=0;i<pydict->block_pos;i++){
+		pnode = pydict->block+i;
 		if(pnode->code != -1){
 			*pos = i;
 			return pnode;
@@ -265,12 +269,13 @@ PNODE* pdict_first(PDICT* pdict, unsigned int* pos)
  * ret  : NULL, can NOT get next NODE, reach the end.
  *      : else, pointer to the next NODE
  */
-PNODE* pdict_next(PDICT* pdict, int* pos)
+PNODE* pydict_next(py_dict_t* pydict, int* pos)
 {
-	PNODE*     pnode = NULL;
+	PNODE*        pnode = NULL;
+	unsigned int  i     = 0;
 
-	for(unsigned int i=*pos+1;i<pdict->block_pos;i++){
-		pnode = pdict->block+i;
+	for(i=*pos+1;i<pydict->block_pos;i++){
+		pnode = pydict->block+i;
 		if(pnode->code != -1){
 			*pos = i;
 			return pnode;
@@ -283,18 +288,18 @@ PNODE* pdict_next(PDICT* pdict, int* pos)
 /*
  * func : delete a node in the hash table
  *
- * args : pdict, pointer to hash table;
+ * args : pydict, pointer to hash table;
  *      : key, the tobe delete node key
  *
  * ret  : 0, NOT found; 1 founded.
  *
  * node : just mark delete, set pnode->code to -1 mean delete.
  */
-int pdict_del(PDICT* pdict, const char* key, const int keylen)
+int pydict_del(py_dict_t* pydict, const char* key, const int keylen)
 {
 	PNODE* pnode = NULL;
 
-	pnode = pdict_find(pdict, key, keylen);
+	pnode = pydict_find_node_str(pydict, key, keylen);
 	if(!pnode){
 		return 0;
 	}
@@ -309,17 +314,17 @@ int pdict_del(PDICT* pdict, const char* key, const int keylen)
 /*
  * func : find in the hash table
  *
- * args : pdict, pointer to hash table
+ * args : pydict, pointer to hash table
  *      : key, a value to search by
  *      : value, search result
  *
  * ret  : 0, NOT found; 1, founded
  */
-int pdict_find(PDICT* pdict, const char* key, const int keylen, int* code, int* value)
+int pydict_find(py_dict_t* pydict, const char* key, const int keylen, int* code, int* value)
 {
 	PNODE* pnode = NULL;
 
-	pnode = pdict_find(pdict, key, keylen);
+	pnode = pydict_find_node_str(pydict, key, keylen);
 	if(pnode==NULL){
 		return 0;
 	}else{
@@ -332,20 +337,20 @@ int pdict_find(PDICT* pdict, const char* key, const int keylen, int* code, int* 
 /*
  * func : find int the hash table, return the founed node
  *
- * args : pdict, pointer to the hash table
+ * args : pydict, pointer to the hash table
  *      : key, the key to be searched.
  *
  * ret  : NULL, NOT found
  *      : else, pointer to the founed node
  */
-PNODE* pdict_find(PDICT* pdict, const char* key, const int keylen)
+PNODE* pydict_find_node_str(py_dict_t* pydict, const char* key, const int keylen)
 {
 	PNODE*         pnode      = NULL;
 	SIGN64         sign;
 
-	py_sign64(key, keylen, &sign);
+	py_sign64_struct(key, keylen, &sign);
 
-	pnode = pdict_find(pdict, &sign);
+	pnode = pydict_find_node(pydict, &sign);
 
 	return pnode;
 		
@@ -354,13 +359,13 @@ PNODE* pdict_find(PDICT* pdict, const char* key, const int keylen)
 /*
  * func : find node in hash table by signature
  *
- * args : pdict, pointer to hash table
+ * args : pydict, pointer to hash table
  *      : sign,  64 bit string signature
  *
  * ret  : NULL, not found
  *      : else, pointer to the founded node
  */
-PNODE* pdict_find(PDICT* pdict, SIGN64* sign)
+PNODE* pydict_find_node(py_dict_t* pydict, SIGN64* sign)
 {
 	unsigned int   sign1      = 0;
 	unsigned int   sign2      = 0;
@@ -372,8 +377,8 @@ PNODE* pdict_find(PDICT* pdict, SIGN64* sign)
 
 	sign1      = sign->sign;
 	hashval    = sign1;
-	hashtab    = pdict->hashtab;
-	hashsize   = pdict->hashsize;
+	hashtab    = pydict->hashtab;
+	hashsize   = pydict->hashsize;
 	pos = hashval % hashsize;
 
 	if(hashtab[pos]==COMMON_NULL){ // can not find in hash table
@@ -381,12 +386,12 @@ PNODE* pdict_find(PDICT* pdict, SIGN64* sign)
 	}
 	else{
 		unsigned int nodepos = hashtab[pos];
-		pnode = pdict->block+nodepos;
+		pnode = pydict->block+nodepos;
 		while(pnode->next!=COMMON_NULL){
 			if(pnode->sign1==sign1&&pnode->sign2==sign2){
 				break;
 			}
-			pnode = pdict->block + pnode->next;
+			pnode = pydict->block + pnode->next;
 		}
 		if(pnode->sign1==sign1&&pnode->sign2==sign2){ // find same key node
 			return pnode;
@@ -399,30 +404,30 @@ PNODE* pdict_find(PDICT* pdict, SIGN64* sign)
 }
 
 /*
- * func : save PDICT to disk file
+ * func : save py_dict_t to disk file
  *
- * args : pdict, the PDICT pointer 
+ * args : pydict, the py_dict_t pointer 
  *      : path, file, dest path and file
  *
  * ret  : 0, succeed; 
  *        -1, error.
  */
-int pdict_save(PDICT* pdict, const char* path, const char* file)
+int pydict_save(py_dict_t* pydict, const char* path, const char* file)
 {
 	FILE*  fp = NULL;
 	unsigned int hashsize   = 0;
 	unsigned int block_pos  = 0;
 	char fullpath[256];
 
-	hashsize   = pdict->hashsize;
-	block_pos  = pdict->block_pos;
+	hashsize   = pydict->hashsize;
+	block_pos  = pydict->block_pos;
 
 	cmps_path(fullpath, sizeof(fullpath), path, file);
 	if((fp=fopen(fullpath, "wb"))==NULL){
 		goto failed;
 	}
 	
-	// save integer values of PDICT
+	// save integer values of py_dict_t
 	if(fwrite(&hashsize, sizeof(unsigned int), 1, fp)!=1){
 		goto failed;
 	}
@@ -431,12 +436,12 @@ int pdict_save(PDICT* pdict, const char* path, const char* file)
 	}
 
 	// save hashtable
-	if(fwrite(pdict->hashtab, sizeof(unsigned int), hashsize, fp)!=hashsize){
+	if(fwrite(pydict->hashtab, sizeof(unsigned int), hashsize, fp)!=hashsize){
 		goto failed;
 	}
 	
 	// save blocks
-	if(fwrite(pdict->block, sizeof(PNODE), block_pos, fp)!=block_pos){
+	if(fwrite(pydict->block, sizeof(PNODE), block_pos, fp)!=block_pos){
 		goto failed;
 	}
 
@@ -452,39 +457,39 @@ failed:
 }
 
 /*
- * func : load PDICT from disk file
+ * func : load py_dict_t from disk file
  *
  * args : path, file
  *
  * ret  : NULL, error
- *      : else, pointer to PDICT struct
+ *      : else, pointer to py_dict_t struct
  */
-PDICT* pdict_load(const char* path, const char* file)
+py_dict_t* pydict_load(const char* path, const char* file)
 {
 	char  fullpath[512] = {0};
 
 	// open dict file
 	cmps_path(fullpath, sizeof(fullpath), path, file);
 
-	return pdict_load(fullpath);
+	return pydict_load_fullpath(fullpath);
 }
 
 
 
 /*
- * func : load PDICT from disk file
+ * func : load py_dict_t from disk file
  *
  * args : full_path
  *
  * ret  : NULL, error
- *      : else, pointer to PDICT struct
+ *      : else, pointer to py_dict_t struct
  */
-PDICT*   pdict_load(const char* full_path)
+py_dict_t*   pydict_load_fullpath(const char* full_path)
 {
 	unsigned int hashsize   = 0;
 	unsigned int block_pos  = 0;
 	FILE*        fp         = NULL;
-	PDICT*       pdict      = NULL;
+	py_dict_t*       pydict      = NULL;
 
 	// open dict file
 	if ((fp = fopen(full_path, "rb")) == NULL)
@@ -492,7 +497,7 @@ PDICT*   pdict_load(const char* full_path)
 	    goto failed;
 	}
 
-	// load integer values of PDICT
+	// load integer values of py_dict_t
 	if (fread(&hashsize, sizeof(unsigned int), 1, fp) != 1){
 		goto failed;
 	}
@@ -501,26 +506,26 @@ PDICT*   pdict_load(const char* full_path)
 		goto failed;
 	}
 	
-	// create PDICT struct
-	if ((pdict = pdict_create(hashsize, block_pos+BLOCK_STEP)) == NULL){
+	// create py_dict_t struct
+	if ((pydict = pydict_create(hashsize, block_pos+BLOCK_STEP)) == NULL){
 		goto failed;
 	}
 	
 	// load hash tabel
-	if (fread(pdict->hashtab, sizeof(unsigned int), hashsize, fp) != hashsize){
+	if (fread(pydict->hashtab, sizeof(unsigned int), hashsize, fp) != hashsize){
 		goto failed;
 	}
 
 	// load blocks
-	if (fread(pdict->block, sizeof(PNODE), block_pos, fp) != block_pos){
+	if (fread(pydict->block, sizeof(PNODE), block_pos, fp) != block_pos){
 		goto failed;
 	}
 
-	pdict->block_pos  = block_pos;
-	pdict->hashsize   = hashsize;
+	pydict->block_pos  = block_pos;
+	pydict->hashsize   = hashsize;
 
 	fclose(fp);
-	return pdict;
+	return pydict;
 
 failed:
 	if (fp){
@@ -528,9 +533,9 @@ failed:
 		fp = NULL;
 	}
 	
-	if (pdict){
-		pdict_free(pdict);
-		pdict = NULL;
+	if (pydict){
+		pydict_free(pydict);
+		pydict = NULL;
 	}
 	return NULL;
 	

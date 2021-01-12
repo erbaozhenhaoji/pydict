@@ -160,29 +160,29 @@ int py_fstat(const char* filename, int* linenum, int* filesize)
  * ret  : true, it is a hanzi;
  *      : false, it is NOT a hanzi
  */
-bool is_gbk_hz(unsigned char* pstr)
+int is_gbk_hz(unsigned char* pstr)
 {
 	assert(pstr);
 	if(pstr[0]==0 || pstr[1]==0){
-		return false;
+		return 0;
 	}
 
 	if(pstr[1] == 0x7f){
-		return false;
+		return 0; 
 	}
 
 	// if it is a gbk/2 word
 	if ( (pstr[0]>=0xB0) && (pstr[0]<=0xF7) &&
 			(pstr[1]>=0xA1) && (pstr[1]<=0xFE))
 	{       
-		return true;
+		return 1;
 	}
 
 	// if it is a gbk/3 word
 	else if ((pstr[0]>=0x81) && (pstr[0]<=0xa0) &&
 			(pstr[1]>=0x40) && (pstr[1]<=0xfe))
 	{                       
-		return true;
+		return 1;
 	}
 
 	// if it is a gbk/4 word
@@ -190,48 +190,12 @@ bool is_gbk_hz(unsigned char* pstr)
 	else if ((pstr[0]>=0xaa) && (pstr[0]<=0xfe) &&
 			(pstr[1]>=0x40) && (pstr[1]<=0xa0))
 	{       
-		return true;
+		return 1;
 	}
 	else{
-		return false;
+		return 0;
 	}
 }	
-
-/*
- * func : split string into words by specified delimiters
- * 
- * args : s, the input string
- *      : list, result word vector
- *      : delim, the specifed delimeters
- *
- * ret  : word number
- *
- * note : this function is NOT thread safe
- */
-int split(const char* s,vector<string>& list,const char *delim)
-{       
-	const char* begin = s;
-	const char* end;
-
-	list.clear();
-	while (*begin) { 
-		// skip all delimiters
-		while (*begin && strchr(delim,*begin))
-			++begin;
-
-		end = begin;
-		while (*end && strchr(delim,*end) == NULL)
-			++end;
-
-		if (*begin)
-			list.push_back(string(begin,end - begin));
-
-		begin = end;
-	}       
-
-	return list.size();
-}               
-
 
 
 /*

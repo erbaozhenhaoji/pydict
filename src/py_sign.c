@@ -11,7 +11,7 @@ static inline unsigned int murmur_hash_32 ( const void * key, int len, unsigned 
  *
  * ret  :
  */
-void py_sign64(const char* str, int len, unsigned int* iSign1, unsigned int* iSign2)
+void py_sign64_double_int(const char* str, int len, unsigned int* iSign1, unsigned int* iSign2)
 {
 	unsigned long val64 = 0;
 	unsigned int sign1 = 0;
@@ -36,7 +36,7 @@ void py_sign64(const char* str, int len, unsigned int* iSign1, unsigned int* iSi
  *
  * ret  :
  */
-void py_sign64(const char* str, int len, SIGN64* sign)
+void py_sign64_struct(const char* str, int len, SIGN64* sign)
 {
 	unsigned long val64 = 0;
 

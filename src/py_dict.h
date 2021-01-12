@@ -11,8 +11,8 @@
  * 
  * Modify   : 2008-10-15
  *******************************************************************************/
-#ifndef _PDICT_H
-#define _PDICT_H
+#ifndef _py_dict_t_H
+#define _py_dict_t_H
 
 #include <py_sign.h>
 
@@ -40,137 +40,137 @@ typedef struct _int_dict{
 	PNODE*            block;
 	unsigned int      block_pos;
 	unsigned int      block_size;
-}PDICT;
+}py_dict_t;
 
 
 // functions defined here
 //
 
 /*
- * func : create an PDICT struct
+ * func : create an py_dict_t struct
  *
  * args : hashsize, the hash table size
  *      : nodesize, the node array size
  *
  * ret  : NULL, error;
- *      : else, pointer the the PDICT struct
+ *      : else, pointer the the py_dict_t struct
  */ 
-PDICT*   pdict_create(const int hashsize, const int nodesize);
+py_dict_t*   pydict_create(const int hashsize, const int nodesize);
 
 
 /*
- * func : load PDICT from disk file
+ * func : load py_dict_t from disk file
  *
  * args : path, file
  *
  * ret  : NULL, error
- *      : else, pointer to PDICT struct
+ *      : else, pointer to py_dict_t struct
  */
-PDICT*   pdict_load(const char* path, const char* file);
+py_dict_t*   pydict_load(const char* path, const char* file);
 
 
 
 /*
- * func : load PDICT from disk file
+ * func : load py_dict_t from disk file
  *
  * args : full_path
  *
  * ret  : NULL, error
- *      : else, pointer to PDICT struct
+ *      : else, pointer to py_dict_t struct
  */
-PDICT*   pdict_load(const char* full_path);
+py_dict_t*   pydict_load_fullpath(const char* full_path);
 
 
 
 /*
- * func : free a PDICT struct
+ * func : free a py_dict_t struct
  */
-void     pdict_free(PDICT* pdict);
+void     pydict_free(py_dict_t* pydict);
 
 /*
  * func : reset the hash table;
  */
-void     pdict_reset(PDICT* pdict);
+void     pydict_reset(py_dict_t* pydict);
 
 /*
- * func : save PDICT to disk file
+ * func : save py_dict_t to disk file
  *
- * args : pdict, the PDICT pointer 
+ * args : pydict, the py_dict_t pointer 
  *      : path, file, dest path and file
  *
  * ret  : 0, succeed; 
  *        -1, error.
  */
-int      pdict_save(PDICT* pdict, const char* path, const char* file);
+int      pydict_save(py_dict_t* pydict, const char* path, const char* file);
 
 /*
  * func : add a value pair to the hash table;
  * 
- * args : pdict, the pointer to PDICT 
+ * args : pydict, the pointer to py_dict_t 
  *      : key, value, the input pair
  *
  * ret  : 1,  find a same key, value changed;
  *      : 0,  find NO same key, new node added,
  *      : -1, error;
  */
-int      pdict_add(PDICT* pdict, const char* key, const int len, const int code, const int value);
+int      pydict_add(py_dict_t* pydict, const char* key, const int len, const int code, const int value);
 
 /*
  * func : add a node to the hash table;
  * 
- * args : pdict, pointer to PDICT 
+ * args : pydict, pointer to py_dict_t 
  *      : node , pointer to input node
  *
  * ret  : 1,  find a same key, value changed;
  *      : 0,  find NO same key, new node added,
  *      : -1, error;
  */
-int      pdict_add(PDICT* pdict, PNODE* node);
+int      pydict_add_node(py_dict_t* pydict, PNODE* node);
 
 /*
  * func : delete a node in the hash table
  *
- * args : pdict, pointer to hash table;
+ * args : pydict, pointer to hash table;
  *      : key, the tobe delete node key
  *
  * ret  : 0, NOT found; 1 founded.
  *
  * node : just mark delete, set pnode->code to -1 mean delete.
  */
-int      pdict_del(PDICT* pdict, const char* key, const int len);
+int      pydict_del(py_dict_t* pydict, const char* key, const int len);
 
 /*
  * func : find in the hash table
  *
- * args : pdict, pointer to hash table
+ * args : pydict, pointer to hash table
  *      : key, a value to search by
  *      : value, search result
  *
  * ret  : 0, NOT found; 1, founded
  */
-int      pdict_find(PDICT* pdict, const char* key, const int len, int* code, int* value);
+int      pydict_find(py_dict_t* pydict, const char* key, const int len, int* code, int* value);
 
 /*
  * func : find node in hash table by signature
  *
- * args : pdict, pointer to hash table
+ * args : pydict, pointer to hash table
  *      : sign,  64 bit string signature
  *
  * ret  : NULL, not found
  *      : else, pointer to the founded node
  */
-PNODE*   pdict_find(PDICT* pdict, SIGN64* sign);
+PNODE*   pydict_find_node(py_dict_t* pydict, SIGN64* sign);
 
 /*
  * func : find int the hash table, return the founed node
  *
- * args : pdict, pointer to the hash table
+ * args : pydict, pointer to the hash table
  *      : key, the key to be searched.
  *
  * ret  : NULL, NOT found
  *      : else, pointer to the founed node
  */
-PNODE*   pdict_find(PDICT* pdict, const char* key, const int len);
+PNODE*   pydict_find_node_str(py_dict_t* pydict, const char* key, const int len);
 
 /*
  * func : get the first node in hash table
@@ -180,7 +180,7 @@ PNODE*   pdict_find(PDICT* pdict, const char* key, const int len);
  * ret  : NULL, can NOT get first node, hash table empty
  *      : else, pointer to the first node
  */
-PNODE*   pdict_first(PDICT* pdict, int* pos);
+PNODE*   pydict_first(py_dict_t* pydict, unsigned int* pos);
 
 /*
  * func : get next node from the hash table
@@ -190,6 +190,6 @@ PNODE*   pdict_first(PDICT* pdict, int* pos);
  * ret  : NULL, can NOT get next NODE, reach the end.
  *      : else, pointer to the next NODE
  */
-PNODE*   pdict_next(PDICT* pdict, int* pos);
+PNODE*   pydict_next(py_dict_t* pydict, int* pos);
 
 #endif
