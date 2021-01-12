@@ -37,7 +37,7 @@ void py_sign32(const char* str, const int len, unsigned int* sign);
  *
  * ret  :
  */
-void py_sign64(const char* str, const int len, unsigned int* sign1, unsigned int* sign2);
+void py_sign64_double_int(const char* str, const int len, unsigned int* sign1, unsigned int* sign2);
 
 /*
  * func : make a 64 bit string signature
@@ -47,7 +47,7 @@ void py_sign64(const char* str, const int len, unsigned int* sign1, unsigned int
  *
  * ret  :
  */
-void py_sign64(const char* str, const int len, SIGN64* sign);
+void py_sign64_struct(const char* str, const int len, SIGN64* sign);
 
 /*
  * func : make a 64 bit string signature

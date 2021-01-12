@@ -1,20 +1,20 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
-#include <pdict.h>
+#include <py_dict.h>
 
 int main(int argc, char* argv[])
 {
-	PDICT* pdict = NULL;
+	py_dict_t* pydict = NULL;
 	
-	pdict = pdict_create(100, 555);
-	assert(pdict);
+	pydict = pydict_create(100, 555);
+	assert(pydict);
 
-  pdict_add(pdict, "hongkong1", 9, 111, 1111);
-  pdict_add(pdict, "hongkong2", 9, 222, 2222);
-  pdict_add(pdict, "hongkong3", 9, 333, 3333);
+  pydict_add(pydict, "hongkong1", 9, 111, 1111);
+  pydict_add(pydict, "hongkong2", 9, 222, 2222);
+  pydict_add(pydict, "hongkong3", 9, 333, 3333);
   
-  pdict_save(pdict, "./", "dictbin");
+  pydict_save(pydict, "./", "dictbin");
 
 	return 0;
 }

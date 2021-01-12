@@ -9,17 +9,17 @@ COMMON_DEFINES = -DLINUX -D_REENTERANT -Wall -D_FILE_OFFSET_BITS=64 $(INCLUDE)  
 
 ifeq "$(MAKECMDGOALS)" "release"
 	DEFINES=$(COMMON_DEFINES) -DNDEBUG -O3
-	CPPFLAGS= $(DEFINES) 
+	CFLAGS= $(DEFINES) 
 else
 	ifeq "$(MAKECMDGOALS)" "withpg"
 		DEFINES=$(COMMON_DEFINES) 
-		CPPFLAGS= -g -pg $(DEFINES) 
+		CFLAGS= -g -pg $(DEFINES) 
 	else
 		DEFINES=$(COMMON_DEFINES)
-		CPPFLAGS= -g $(DEFINES) 
+		CFLAGS= -g $(DEFINES) 
 	endif
 endif
-CC  = g++
+CC  = gcc
 AR  = ar
 #=========================================================================
 
@@ -31,7 +31,7 @@ TEST_EXEC =
 all	:  $(EXECUTABLE) $(LIBS) $(TEST_EXEC)
 
 deps :
-	$(CC) -MM -MG *.cpp >depends
+	$(CC) -MM -MG *.c >depends
 
 
 

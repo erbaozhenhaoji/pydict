@@ -10,35 +10,8 @@
 #ifndef _PY_UTILS_H
 #define _PY_UTILS_H
 
-#include <string>
-#include <vector>
-using namespace std;
+#include <string.h>
 
-/*
- * func : split string into words by specified delimiters
- * 
- * args : s, the input string
- *      : list, result word vector
- *      : delim, the specifed delimeters
- *
- * ret  : word number
- *
- * note : this function is NOT thread safe
- */
-int split(const char* s,vector<string>& list,const char *delim);
-
-/*
- * func  : split string to words according to certain delimiters
- *
- * args  : str, the tring to be splitted.
- *       : items, item_size, result word array and its size
- *       : delim, specified delimiters
- *
- * ret   : -1, failed.
- *       : else, number of words
- *
- * note  : str will be CHANGED!
- */
 int split_c(char* str, char** items, int item_size, const char* delim);
 
 /*
@@ -84,7 +57,7 @@ int py_fline(const char* filename, int* linenum);
  * ret  : true, it is a hanzi;
  *      : false, it is NOT a hanzi
  */
-bool is_gbk_hz(unsigned char* pstr);
+int is_gbk_hz(unsigned char* pstr);
 
 /*
  * func : sleep function for thread

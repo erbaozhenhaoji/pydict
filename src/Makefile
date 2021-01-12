@@ -1,6 +1,6 @@
 TARGET=libpydict.a
 PREFIX=/usr/lib
-CC= g++
+CC= gcc
 
 INCLUDES = -I./ -I./code/
 LIBS =
@@ -15,11 +15,11 @@ else
 		CFLAGS= $(DEFINES) -g
 	endif
 endif
-C_SOURCES = $(wildcard *.cpp code/*.cpp)
-C_OBJS = $(patsubst %.cpp, %.o, $(C_SOURCES))
+C_SOURCES = $(wildcard *.c code/*.c)
+C_OBJS = $(patsubst %.c, %.o, $(C_SOURCES))
 
-.cpp.o:
-	$(CC) -c -o $*.o $(CFLAGS) $(INCLUDES) $*.cpp
+.c.o:
+	$(CC) -c -o $*.o $(CFLAGS) $(INCLUDES) $*.c
 
 $(TARGET): $(C_OBJS)
 	rm -f $@
